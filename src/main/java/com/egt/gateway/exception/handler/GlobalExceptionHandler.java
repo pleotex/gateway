@@ -1,5 +1,8 @@
-package com.egt.gateway.exception;
+package com.egt.gateway.exception.handler;
 
+import com.egt.gateway.exception.DuplicateRequestException;
+import com.egt.gateway.exception.IllegalCurrencyException;
+import com.egt.gateway.exception.IllegalPeriodException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +19,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = DuplicateRequestException.class)
     public ResponseEntity<ErrorDetails> handleDuplicateRequestException(DuplicateRequestException e, HttpServletRequest request){
+        return getErrorDetails(e,request,HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(value = IllegalPeriodException.class)
+    public ResponseEntity<ErrorDetails> handleIllegalPeriodException(IllegalPeriodException e, HttpServletRequest request){
+        return getErrorDetails(e,request,HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(value = IllegalCurrencyException.class)
+    public ResponseEntity<ErrorDetails> handleIllegalCurrencyException(IllegalCurrencyException e, HttpServletRequest request){
         return getErrorDetails(e,request,HttpStatus.BAD_REQUEST);
     }
 }

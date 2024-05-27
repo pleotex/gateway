@@ -49,8 +49,12 @@ public class RatesCollectorService {
                 .collect(Collectors.toMap(Currency::getCurrencyCode, Currency::getCurrencyName));
     }
 
-    public List<ExchangeRate> getLatestForBaseCurrency(String baseCurrency){
-        return exchangeRateRepo.getLatestExchangeRatesForCurrency(baseCurrency);
+    public List<ExchangeRate> getLatestExchangeRates(String baseCurrency){
+        return exchangeRateRepo.findLatestExchangeRatesByCurrencyFrom(baseCurrency);
+    }
+
+    public List<ExchangeRate> getLatestExchangeRates(String baseCurrency, LocalDateTime fromTime){
+        return exchangeRateRepo.findLatestExchangeRates(baseCurrency, fromTime);
     }
 
 //    @Scheduled(cron = "${fetch.interval.cron}")
