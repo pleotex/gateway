@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import static com.egt.gateway.utils.DateTimeUtils.getFromMillis;
+import java.time.LocalDateTime;
 
 
 @Service
@@ -17,7 +17,7 @@ public class RequestLogService {
 
     private final RequestLogRepo requestLogRepo;
 
-    public void processRequest(String requestId, String serviceName, long timestamp, long clientId){
+    public void processRequest(String requestId, String serviceName, LocalDateTime timestamp, long clientId){
         log.info("Started processing request={} from client={} and service={}", requestId, clientId, serviceName);
 
         if(requestLogRepo.existsById(requestId)){
@@ -27,11 +27,11 @@ public class RequestLogService {
         saveRequest(requestId, serviceName, timestamp, clientId);
     }
 
-    public void saveRequest(String requestId, String serviceName, long timestamp, long clientId) {
+    public void saveRequest(String requestId, String serviceName, LocalDateTime timestamp, long clientId) {
         RequestLog requestLog = new RequestLog();
         requestLog.setServiceName(serviceName);
         requestLog.setRequestId(requestId);
-        requestLog.setTimestamp(getFromMillis(timestamp));
+        requestLog.setTimestamp(timestamp);
         requestLog.setClientId(clientId);
 
         requestLogRepo.save(requestLog);

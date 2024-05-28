@@ -1,4 +1,4 @@
-package com.egt.gateway.dto;
+package com.egt.gateway.dto.json;
 
 import lombok.*;
 

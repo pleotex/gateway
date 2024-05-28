@@ -1,4 +1,4 @@
-package com.egt.gateway.dto;
+package com.egt.gateway.dto.json;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
@@ -7,11 +7,10 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class HistoryRateRequestDto {
+public class CurrentRateJsonRequestDto {
 
     private String requestId;
     private long timestamp;
     private long clientId;
     private String currency;
-    private int period;
 }

@@ -1,8 +1,8 @@
 package com.egt.gateway.rest;
 
-import com.egt.gateway.dto.CurrentRateJsonRequestDto;
-import com.egt.gateway.dto.CurrentRateJsonResponseDto;
-import com.egt.gateway.dto.HistoryRateRequestDto;
+import com.egt.gateway.dto.json.CurrentRateJsonRequestDto;
+import com.egt.gateway.dto.json.CurrentRateJsonResponseDto;
+import com.egt.gateway.dto.json.HistoryRateRequestDto;
 import com.egt.gateway.service.RequestLogService;
 import com.egt.gateway.service.StatisticsCollectorService;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 import static com.egt.gateway.Constants.EXT_SERVICE_1_NAME;
+import static com.egt.gateway.utils.DateTimeUtils.getFromMillis;
 
 
 @RestController
@@ -31,7 +32,7 @@ public class JsonProcessController {
     public ResponseEntity<CurrentRateJsonResponseDto> getLatestExchangeRate(@RequestBody CurrentRateJsonRequestDto requestDto){
 
         requestLogService.processRequest(requestDto.getRequestId(), EXT_SERVICE_1_NAME,
-                requestDto.getTimestamp(), requestDto.getClientId());
+                getFromMillis(requestDto.getTimestamp()), requestDto.getClientId());
 
         CurrentRateJsonResponseDto response = statisticsCollectorService.getCurrentRates(requestDto.getCurrency());
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -44,7 +45,7 @@ public class JsonProcessController {
     public ResponseEntity<List<CurrentRateJsonResponseDto>> getLatestExchangeRate(@RequestBody HistoryRateRequestDto requestDto){
 
         requestLogService.processRequest(requestDto.getRequestId(), EXT_SERVICE_1_NAME,
-                requestDto.getTimestamp(), requestDto.getClientId());
+                getFromMillis(requestDto.getTimestamp()), requestDto.getClientId());
 
         List<CurrentRateJsonResponseDto> response = statisticsCollectorService.getHistoryRates(requestDto.getCurrency(), requestDto.getPeriod());
         return new ResponseEntity<>(response, HttpStatus.OK);

@@ -1,6 +1,6 @@
 package com.egt.gateway.service;
 
-import com.egt.gateway.dto.CurrentRateJsonResponseDto;
+import com.egt.gateway.dto.json.CurrentRateJsonResponseDto;
 import com.egt.gateway.exception.IllegalCurrencyException;
 import com.egt.gateway.exception.IllegalPeriodException;
 import com.egt.gateway.model.ExchangeRate;
