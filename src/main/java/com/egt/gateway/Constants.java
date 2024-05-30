@@ -10,4 +10,6 @@ public class Constants {
     public static final String ILLEGAL_PERIOD_EXCEPTION = "Provided period of %d hours is invalid. Should be between 1 and %d hours";
     public static final String ILLEGAL_CURRENCY_EXCEPTION = "Currency=%s is not in the currency list";
     public static final String CURRENCY_SYMBOLS_CACHE = "currencies";
+    public static final String EXCHANGE_RATE_QUEUE_NAME = "exchangeRateQueue";
+    public static final String REQUEST_LOG_QUEUE_NAME = "requestLogQueue";
 }

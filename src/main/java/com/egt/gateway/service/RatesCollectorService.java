@@ -1,12 +1,17 @@
 package com.egt.gateway.service;
 
+import com.egt.gateway.ExchangeRateDto;
 import com.egt.gateway.dto.fixer.LatestRatesResponseDto;
 import com.egt.gateway.mapper.MapperUtils;
+import com.egt.gateway.messaging.RabbitMqProducer;
 import com.egt.gateway.model.Currency;
 import com.egt.gateway.model.ExchangeRate;
 import com.egt.gateway.repo.CurrencyRepository;
 import com.egt.gateway.repo.ExchangeRateRepository;
 import com.egt.gateway.utils.ConversionUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -21,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.egt.gateway.Constants.CURRENCY_SYMBOLS_CACHE;
+import static com.egt.gateway.Constants.*;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +36,8 @@ public class RatesCollectorService {
     private final CurrencyRepository currencyRepository;
     private final ExchangeRateRepository exchangeRateRepo;
     private final FixerService fixerService;
+    private final ObjectMapper objectMapper;
+    private final RabbitMqProducer rabbitMqProducer;
 
 
     public void saveCurrencySymbols(){
@@ -74,6 +81,7 @@ public class RatesCollectorService {
             List<ExchangeRate> exchangeRates = mapExchangeRate(rates);
             exchangeRateRepo.saveAll(exchangeRates);
             log.info("{} exchange rates for {} are stored in DB", exchangeRates.size(), baseCurrency);
+            sendMessage(objectMapper.convertValue(exchangeRates, new TypeReference<>(){}));
         }
     }
 
@@ -88,16 +96,25 @@ public class RatesCollectorService {
                 throw new RuntimeException(String.format("Invalid conversion rate for %s", baseCurrency));
             }
 
-            ExchangeRate exchangeRate = new ExchangeRate();
+            ExchangeRateDto exchangeRate = new ExchangeRateDto();
             Currency convertedCurrency = new Currency(rates.getKey(), getSymbols().get(rates.getKey()));
             exchangeRate.setCurrencyCodeFrom(baseCurrency);
             exchangeRate.setCurrencyCodeTo(convertedCurrency);
             exchangeRate.setFromToConversionRate(rates.getValue());
             exchangeRate.setToFromConversionRate(ConversionUtils.round(1/rates.getValue(), 6));
             exchangeRate.setCreatedAt(ratesCollectionTime);
-            exchangeRates.add(exchangeRate);
+            exchangeRates.add(objectMapper.convertValue(exchangeRate, ExchangeRate.class));
         }
         return exchangeRates;
+    }
+
+    private void sendMessage(List<ExchangeRateDto> exchangeRateDtos){
+        try {
+            String exchangeRateDtoMsg = objectMapper.writeValueAsString(exchangeRateDtos);
+            rabbitMqProducer.sendMessage(EXCHANGE_RATE_QUEUE_NAME, exchangeRateDtoMsg);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

@@ -1,5 +1,7 @@
 package com.egt.gateway;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +16,13 @@ public class GatewayApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(GatewayApplication.class, args);
+	}
+
+	@Bean
+	public ObjectMapper objectMapper(){
+		return JsonMapper.builder()
+				.findAndAddModules()
+				.build();
 	}
 
 	@Bean
