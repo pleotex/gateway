@@ -3,6 +3,7 @@ package com.egt.gateway.exception.handler;
 import com.egt.gateway.exception.DuplicateRequestException;
 import com.egt.gateway.exception.IllegalCurrencyException;
 import com.egt.gateway.exception.IllegalPeriodException;
+import com.egt.gateway.exception.IllegalXmlFormatException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,8 +28,14 @@ public class GlobalExceptionHandler {
         return getErrorDetails(e,request,HttpStatus.BAD_REQUEST);
     }
 
+
     @ExceptionHandler(value = IllegalCurrencyException.class)
     public ResponseEntity<ErrorDetails> handleIllegalCurrencyException(IllegalCurrencyException e, HttpServletRequest request){
+        return getErrorDetails(e,request,HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(value = IllegalXmlFormatException.class)
+    public ResponseEntity<ErrorDetails> handleIllegalXmlFormatException(IllegalXmlFormatException e, HttpServletRequest request){
         return getErrorDetails(e,request,HttpStatus.BAD_REQUEST);
     }
 }

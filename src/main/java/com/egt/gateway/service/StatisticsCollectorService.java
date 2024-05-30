@@ -29,6 +29,9 @@ public class StatisticsCollectorService {
         }
 
         List<ExchangeRate> rates = ratesCollectorService.getLatestExchangeRates(baseCurrency);
+        if(rates.isEmpty()){
+            throw new RuntimeException("Custom exception");
+        }
         Map<String, Double> exchangeRates = createRatesTable(rates);
 
         return new CurrentRateJsonResponseDto(baseCurrency, exchangeRates, rates.getFirst().getCreatedAt());

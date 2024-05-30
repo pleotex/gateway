@@ -19,10 +19,10 @@ import java.util.List;
 @Slf4j
 public class FixerService {
 
-    @Value("$fixer.api.uri")
+    @Value("${fixer.api.uri}")
     private String fixerUrl;
 
-    @Value("$fixer.api.key")
+    @Value("${fixer.api.key}")
     private String fixerApiKey;
 
     private final RestTemplate restTemplate;
@@ -30,12 +30,12 @@ public class FixerService {
     public SymbolResponseDto getSymbols(){
         UriComponentsBuilder uriBuilder = UriComponentsBuilder
                 .fromHttpUrl(fixerUrl)
-                .path("/symbol");
+                .path("/symbols")
+                .queryParam("access_key", fixerApiKey);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-        headers.set("access-key", fixerApiKey);
 
         HttpEntity<SymbolResponseDto> request = new HttpEntity<>(headers);
 
@@ -51,20 +51,19 @@ public class FixerService {
                     response.getBody().getSymbols().size(), "currency symbols"));
             return response.getBody();
         } else {
-//            TODO: Throw exception
-            throw new RuntimeException("Error");
+            throw new RuntimeException("Error in processing Fixer response");
         }
     }
 
     public List<LatestRatesResponseDto> getLatestRates(){
         UriComponentsBuilder uriBuilder = UriComponentsBuilder
                 .fromHttpUrl(fixerUrl)
-                .path("/latest");
+                .path("/latest")
+                .queryParam("access_key", fixerApiKey);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-        headers.set("access-key", fixerApiKey);
 
         HttpEntity<LatestRatesResponseDto> request = new HttpEntity<>(headers);
 
@@ -79,13 +78,11 @@ public class FixerService {
 
         if(null != latestRates && !latestRates.isEmpty()){
 
-//            TODO: Change log
             log.info(String.format(Constants.RETRIEVED_FIXER_RESULTS_MSG,
-                    latestRates.size(), "currency symbols"));
+                    latestRates.size(), "currency rates"));
             return latestRates;
         } else {
-//            TODO: Throw exception
-            throw new RuntimeException("Error");
+            throw new RuntimeException("Error in processing Fixer response");
         }
     }
 
@@ -93,12 +90,12 @@ public class FixerService {
         UriComponentsBuilder uriBuilder = UriComponentsBuilder
                 .fromHttpUrl(fixerUrl)
                 .path("/latest")
+                .queryParam("access_key", fixerApiKey)
                 .queryParam("base", base);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-        headers.set("access-key", fixerApiKey);
 
         HttpEntity<LatestRatesResponseDto> request = new HttpEntity<>(headers);
 
@@ -109,11 +106,10 @@ public class FixerService {
 
         if(response.hasBody() && response.getBody().isSuccess()){
             log.info(String.format(Constants.RETRIEVED_FIXER_RESULTS_MSG,
-                    response.getBody().getRates().size(), "currency symbols"));
+                    response.getBody().getRates().size(), "currency rates"));
             return response.getBody();
         } else {
-//            TODO: Throw exception
-            throw new RuntimeException("Error");
+            throw new RuntimeException();
         }
     }
 }

@@ -13,15 +13,12 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Currency {
-//    @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
-//    @Column(name = "id")
-//    private Long id;
 
     @Id
     @Column(name = "currency_code", length = 3)
     private String currencyCode;
 
-    @Column(name = "currency_name", unique = true)
+//    Not unique because Sierra Leonean Leone has 2 currency_codes
+    @Column(name = "currency_name")
     private String currencyName;
 }

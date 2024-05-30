@@ -5,6 +5,7 @@ import lombok.Data;
 import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Data
 public class ErrorDetails {
@@ -20,7 +21,7 @@ public class ErrorDetails {
     private final int status;
 
     public ErrorDetails(Exception e, HttpStatus error, int status, String uriRequested) {
-        this.time = LocalDateTime.now();
+        this.time = LocalDateTime.now(ZoneOffset.UTC);
         this.error = error;
         this.status = status;
         this.message = e.getMessage();

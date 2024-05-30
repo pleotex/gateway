@@ -10,16 +10,18 @@ import com.egt.gateway.utils.ConversionUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.egt.gateway.utils.DateTimeUtils.getFromMillis;
+import static com.egt.gateway.Constants.CURRENCY_SYMBOLS_CACHE;
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +44,7 @@ public class RatesCollectorService {
         return currencyRepository.findAll();
     }
 
-    @Cacheable
+    @Cacheable(value = CURRENCY_SYMBOLS_CACHE)
     public Map<String, String> getSymbols(){
         return currencyRepository.findAll()
                 .stream()
@@ -64,25 +66,33 @@ public class RatesCollectorService {
     }
 
     @Scheduled(cron = "${fetch.interval.cron}")
+    @Async
     public void saveLatestRates(){
-        LatestRatesResponseDto rates = fixerService.getLatestRates("base");
-        List<ExchangeRate> exchangeRates = mapExchangeRate(rates);
-        exchangeRateRepo.saveAll(exchangeRates);
-        log.info("{} currency symbols are stored in DB", exchangeRates.size());
+
+        for(String baseCurrency : getSymbols().keySet()){
+            LatestRatesResponseDto rates = fixerService.getLatestRates(baseCurrency);
+            List<ExchangeRate> exchangeRates = mapExchangeRate(rates);
+            exchangeRateRepo.saveAll(exchangeRates);
+            log.info("{} exchange rates for {} are stored in DB", exchangeRates.size(), baseCurrency);
+        }
     }
 
     private List<ExchangeRate> mapExchangeRate(LatestRatesResponseDto latestRate){
         List<ExchangeRate> exchangeRates = new ArrayList<>();
-        LocalDateTime ratesCollectionTime = getFromMillis(latestRate.getTimestamp());
+        LocalDateTime ratesCollectionTime = LocalDateTime.now(ZoneOffset.UTC).plusNanos(latestRate.getTimestamp());
         Currency baseCurrency = new Currency(latestRate.getBase(), getSymbols().get(latestRate.getBase()));
 
         for(Map.Entry<String, Double> rates : latestRate.getRates().entrySet()){
+
+            if(rates.getValue().equals(0d)){
+                throw new RuntimeException(String.format("Invalid conversion rate for %s", baseCurrency));
+            }
+
             ExchangeRate exchangeRate = new ExchangeRate();
-            Currency convertedCurrency = new Currency(rates.getKey(), rates.getKey());
+            Currency convertedCurrency = new Currency(rates.getKey(), getSymbols().get(rates.getKey()));
             exchangeRate.setCurrencyCodeFrom(baseCurrency);
             exchangeRate.setCurrencyCodeTo(convertedCurrency);
             exchangeRate.setFromToConversionRate(rates.getValue());
-//            Should be checked for rate != 0
             exchangeRate.setToFromConversionRate(ConversionUtils.round(1/rates.getValue(), 6));
             exchangeRate.setCreatedAt(ratesCollectionTime);
             exchangeRates.add(exchangeRate);
