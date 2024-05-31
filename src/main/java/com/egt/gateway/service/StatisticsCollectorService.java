@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.groupingBy;
 public class StatisticsCollectorService {
 
     private final RatesCollectorService ratesCollectorService;
+    private final CurrencyCollectorService currencyCollectorService;
     public static final int MAX_PERIOD = 48;
 
     public CurrentRateJsonResponseDto getCurrentRates(String baseCurrency){
@@ -60,7 +61,7 @@ public class StatisticsCollectorService {
     }
 
     private boolean isaValidBaseCurrency(String baseCurrency){
-        return ratesCollectorService.getSymbols().containsKey(baseCurrency);
+        return currencyCollectorService.getSymbols().containsKey(baseCurrency);
     }
 
     private Map<String, Double> createRatesTable(List<ExchangeRate> rates) {

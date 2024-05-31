@@ -33,30 +33,11 @@ import static com.egt.gateway.Constants.*;
 @Slf4j
 public class RatesCollectorService {
 
-    private final CurrencyRepository currencyRepository;
+    private final CurrencyCollectorService currencyCollectorService;
     private final ExchangeRateRepository exchangeRateRepo;
     private final FixerService fixerService;
     private final ObjectMapper objectMapper;
     private final RabbitMqProducer rabbitMqProducer;
-
-
-    public void saveCurrencySymbols(){
-        Map<String, String> symbols = fixerService.getSymbols().getSymbols();
-        List<Currency> currencySymbols = MapperUtils.mapCurrencies(symbols);
-        currencyRepository.saveAll(currencySymbols);
-        log.info("{} currency symbols are stored in DB", currencySymbols.size());
-    }
-
-    public List<Currency> findAll(){
-        return currencyRepository.findAll();
-    }
-
-    @Cacheable(value = CURRENCY_SYMBOLS_CACHE)
-    public Map<String, String> getSymbols(){
-        return currencyRepository.findAll()
-                .stream()
-                .collect(Collectors.toMap(Currency::getCurrencyCode, Currency::getCurrencyName));
-    }
 
     public List<ExchangeRate> getLatestExchangeRates(String baseCurrency){
         return exchangeRateRepo.findLatestExchangeRatesByCurrencyFrom(baseCurrency);
@@ -73,22 +54,24 @@ public class RatesCollectorService {
     }
 
     @Scheduled(cron = "${fetch.interval.cron}")
-    @Async
     public void saveLatestRates(){
+        Map<String, String> currencies = currencyCollectorService.getSymbols();
 
-        for(String baseCurrency : getSymbols().keySet()){
+//        only EUR currency can be fetched from fixer latest rates
+//        List<String> euroCurrency = List.of("EUR");
+        for(String baseCurrency : currencies.keySet()){
             LatestRatesResponseDto rates = fixerService.getLatestRates(baseCurrency);
-            List<ExchangeRate> exchangeRates = mapExchangeRate(rates);
+            List<ExchangeRate> exchangeRates = mapExchangeRate(rates, currencies);
             exchangeRateRepo.saveAll(exchangeRates);
             log.info("{} exchange rates for {} are stored in DB", exchangeRates.size(), baseCurrency);
             sendMessage(objectMapper.convertValue(exchangeRates, new TypeReference<>(){}));
         }
     }
 
-    private List<ExchangeRate> mapExchangeRate(LatestRatesResponseDto latestRate){
+    private List<ExchangeRate> mapExchangeRate(LatestRatesResponseDto latestRate, Map<String, String> currencies){
         List<ExchangeRate> exchangeRates = new ArrayList<>();
         LocalDateTime ratesCollectionTime = LocalDateTime.now(ZoneOffset.UTC).plusNanos(latestRate.getTimestamp());
-        Currency baseCurrency = new Currency(latestRate.getBase(), getSymbols().get(latestRate.getBase()));
+        Currency baseCurrency = new Currency(latestRate.getBase(), currencies.get(latestRate.getBase()));
 
         for(Map.Entry<String, Double> rates : latestRate.getRates().entrySet()){
 
@@ -97,7 +80,7 @@ public class RatesCollectorService {
             }
 
             ExchangeRateDto exchangeRate = new ExchangeRateDto();
-            Currency convertedCurrency = new Currency(rates.getKey(), getSymbols().get(rates.getKey()));
+            Currency convertedCurrency = new Currency(rates.getKey(), currencies.get(rates.getKey()));
             exchangeRate.setCurrencyCodeFrom(baseCurrency);
             exchangeRate.setCurrencyCodeTo(convertedCurrency);
             exchangeRate.setFromToConversionRate(rates.getValue());
@@ -116,5 +99,4 @@ public class RatesCollectorService {
             throw new RuntimeException(e);
         }
     }
-
 }
